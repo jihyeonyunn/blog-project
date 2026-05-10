@@ -1,0 +1,385 @@
+{
+  "info": {
+    "name": "Blog Schedule API",
+    "description": "블로그 체험단 일정 관리 API. 로그인 요청을 먼저 실행하면 토큰이 컬렉션 변수 {{token}}에 자동 저장되어 이후 요청에 적용됩니다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scheduleId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. 인증",
+      "item": [
+        {
+          "name": "회원가입",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"a@a.com\",\n  \"name\": \"Jihyeon\",\n  \"password\": \"pw12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/members/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "join"]
+            }
+          }
+        },
+        {
+          "name": "로그인 (토큰 자동 저장)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.collectionVariables.set('token', res.data);",
+                  "    console.log('토큰 저장 완료 (length=' + res.data.length + ')');",
+                  "} else {",
+                  "    console.log('로그인 실패: ' + (res.message || 'unknown'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"a@a.com\",\n  \"password\": \"pw12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/members/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. 일정 CRUD",
+      "item": [
+        {
+          "name": "일정 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.collectionVariables.set('scheduleId', res.data);",
+                  "    console.log('생성된 scheduleId: ' + res.data);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaignName\": \"강남 맛집 체험\",\n  \"companyName\": \"한우집\",\n  \"category\": \"맛집\",\n  \"visitDate\": \"2026-05-20T19:30:00\",\n  \"manuscriptDeadline\": \"2026-05-25\",\n  \"status\": \"APPLIED\",\n  \"address\": \"서울 강남구\",\n  \"contactNumber\": \"010-1234-5678\",\n  \"cost\": 50000,\n  \"memo\": \"2인 식사 제공\",\n  \"applyUrl\": \"https://example.com/apply\",\n  \"postUrl\": null,\n  \"platform\": \"BLOG\",\n  \"rewardType\": \"SERVICE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"]
+            },
+            "description": "status: APPLIED, SELECTED, IN_PROGRESS, POSTED, CLOSED\nplatform: BLOG, INSTAGRAM, YOUTUBE, ETC\nrewardType: CASH, PRODUCT, SERVICE, ETC"
+          }
+        },
+        {
+          "name": "일정 목록 (전체)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"]
+            }
+          }
+        },
+        {
+          "name": "일정 목록 (월별 필터)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules?year=2026&month=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"],
+              "query": [
+                { "key": "year", "value": "2026" },
+                { "key": "month", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "일정 목록 (상태 필터)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules?status=APPLIED",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"],
+              "query": [
+                { "key": "status", "value": "APPLIED", "description": "APPLIED|SELECTED|IN_PROGRESS|POSTED|CLOSED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "일정 목록 (월+상태 필터)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules?year=2026&month=5&status=APPLIED",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"],
+              "query": [
+                { "key": "year", "value": "2026" },
+                { "key": "month", "value": "5" },
+                { "key": "status", "value": "APPLIED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "일정 상세",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules", "{{scheduleId}}"]
+            }
+          }
+        },
+        {
+          "name": "일정 전체 수정 (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaignName\": \"강남 맛집 체험 (수정)\",\n  \"companyName\": \"한우집\",\n  \"category\": \"맛집\",\n  \"visitDate\": \"2026-05-22T20:00:00\",\n  \"manuscriptDeadline\": \"2026-05-27\",\n  \"status\": \"IN_PROGRESS\",\n  \"address\": \"서울 강남구 신사동\",\n  \"contactNumber\": \"010-9999-9999\",\n  \"cost\": 80000,\n  \"memo\": \"메뉴 변경됨\",\n  \"applyUrl\": \"https://example.com/apply\",\n  \"postUrl\": \"https://blog.example.com/post1\",\n  \"platform\": \"BLOG\",\n  \"rewardType\": \"CASH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules", "{{scheduleId}}"]
+            }
+          }
+        },
+        {
+          "name": "상태만 변경 (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SELECTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{scheduleId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules", "{{scheduleId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "일정 삭제",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules", "{{scheduleId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. 통계",
+      "item": [
+        {
+          "name": "월별 비용 합계",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules/stats/monthly?year=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules", "stats", "monthly"],
+              "query": [
+                { "key": "year", "value": "2026" }
+              ]
+            },
+            "description": "year의 1~12월 비용 합계 (데이터 없는 달은 0)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. 검증 시나리오 (선택 실행)",
+      "item": [
+        {
+          "name": "[검증] 필수 필드 누락 → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"visitDate\": \"2026-07-01T10:00:00\",\n  \"status\": \"APPLIED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"]
+            },
+            "description": "campaignName 누락 → \"캠페인명은 필수입니다.\""
+          }
+        },
+        {
+          "name": "[검증] 인증 헤더 없음 → 403",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"]
+            }
+          }
+        },
+        {
+          "name": "[검증] 잘못된 토큰 → 403",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "garbage", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"]
+            }
+          }
+        },
+        {
+          "name": "[격리] 다른 사용자 가입",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"b@b.com\",\n  \"name\": \"Bob\",\n  \"password\": \"pw12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/members/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "join"]
+            }
+          }
+        },
+        {
+          "name": "[격리] B로 로그인 (토큰 교체)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "    pm.collectionVariables.set('token', res.data);",
+                  "    console.log('B의 토큰으로 교체됨');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"b@b.com\",\n  \"password\": \"pw12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/members/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["members", "login"]
+            }
+          }
+        },
+        {
+          "name": "[격리] B로 A의 일정(scheduleId) 조회 → '찾을 수 없습니다'",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules", "{{scheduleId}}"]
+            },
+            "description": "A의 일정 ID로 B의 토큰을 사용하면 정보 누출 없이 동일 메시지 반환"
+          }
+        }
+      ]
+    }
+  ]
+}
